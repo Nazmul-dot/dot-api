@@ -2,6 +2,9 @@ package com.example.DotApi.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
@@ -28,9 +31,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ✅ ENABLE CORS
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/public/**", "/public/**").permitAll()
-                        .requestMatchers("/api/private/**").authenticated()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/public/user/**").permitAll()
+                        .requestMatchers("/api/private/user/**").authenticated()
+                        .anyRequest().permitAll()
                 )
                 .httpBasic(basic -> {}) // ✅ Simplified basic auth
                 .formLogin(AbstractHttpConfigurer::disable); // Disable login form for API
@@ -98,6 +101,15 @@ public class SecurityConfig {
 
         return new InMemoryUserDetailsManager(user);
     }
+
+
+//    @Bean
+//    public AuthenticationManager authenticationManager() {
+//        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+//        authProvider.setUserDetailsService(userDetailsService);
+//        authProvider.setPasswordEncoder(passwordEncoder()); // ✅ Ensure BCrypt is used
+//        return new ProviderManager(List.of(authProvider));
+//    }
 
     // ✅ Password encoder
     @Bean
