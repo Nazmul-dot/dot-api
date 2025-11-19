@@ -14,4 +14,10 @@ public class UserPrivateController {
     public ResponseEntity<?>privateTest(){
         return ResponseEntity.ok("test from private");
     }
+    @GetMapping("/test2")
+    public ResponseEntity<?>privateTest2(){
+        return ResponseEntity.ok("test from private");
+    }
+
+
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 @Service
 public interface IUserService {
 
-        UserResponse signup(User user) throws Exception;
-        UserResponse signIn(User user) throws Exception;
+        UserResponse signup(User userDto) throws Exception;
+//        UserResponse signIn(User userDto) throws Exception;
+        ResponseEntity<?>signIn(User userDto) throws Exception;
 }

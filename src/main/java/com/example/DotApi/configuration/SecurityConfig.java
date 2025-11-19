@@ -1,5 +1,8 @@
 package com.example.DotApi.configuration;
 
+import com.example.DotApi.JwtManage.JwtAuthenticationFilter;
+import com.example.DotApi.User.service.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -7,6 +10,7 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,6 +18,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -24,6 +29,11 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
     // ✅ Main security filter chain - ADD .cors() HERE
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -33,10 +43,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/public/user/**").permitAll()
                         .requestMatchers("/api/private/user/**").authenticated()
+//                        .requestMatchers("/api/private/admin/**").hasRole("admin")
+//                        .requestMatchers("/api/private/admin-meneger/**").hasAnyRole("admin","meneger")
                         .anyRequest().permitAll()
                 )
-                .httpBasic(basic -> {}) // ✅ Simplified basic auth
-                .formLogin(AbstractHttpConfigurer::disable); // Disable login form for API
+//                .httpBasic(basic -> {}) // ✅ Simplified basic auth
+//                .formLogin(AbstractHttpConfigurer::disable); // Disable login form for API
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -91,25 +106,27 @@ public class SecurityConfig {
     }
 
     // ✅ In-memory user for quick testing
-    @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails user = User.builder()
-                .username("admin")
-                .password(passwordEncoder.encode("1234"))
-                .roles("USER")
-                .build();
-
-        return new InMemoryUserDetailsManager(user);
-    }
-
-
+    // ay section ta diye spring sequrity er default username and password change kora jai
+    // kintu puro security setup diye dile er ar kaj lage na
 //    @Bean
-//    public AuthenticationManager authenticationManager() {
-//        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-//        authProvider.setUserDetailsService(userDetailsService);
-//        authProvider.setPasswordEncoder(passwordEncoder()); // ✅ Ensure BCrypt is used
-//        return new ProviderManager(List.of(authProvider));
+//    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
+//        UserDetails user = User.builder()
+//                .username("admin")
+//                .password(passwordEncoder.encode("1234"))
+//                .roles("USER")
+//                .build();
+//
+//        return new InMemoryUserDetailsManager(user);
 //    }
+
+
+    @Bean
+    public AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(customUserDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder()); // ✅ Ensure BCrypt is used
+        return new ProviderManager(List.of(authProvider));
+    }
 
     // ✅ Password encoder
     @Bean
